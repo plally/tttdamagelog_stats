@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS users(
+    nickname VARCHAR(255) NOT NULL,
+    steamid64 BIGINT PRIMARY KEY NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rounds(
+    id SERIAL PRIMARY KEY NOT NULL,
+    map VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS events(
+    id SERIAL PRIMARY KEY NOT NULL,
+    round_id INTEGER REFERENCES rounds(id) NOT NULL,
+    round_time DOUBLE PRECISION NOT NULL,
+    event_time TIMESTAMP NOT NULL,
+    event_type VARCHAR(255) NOT NULL,
+    event_data JSONB
+);
+
+
