@@ -6,7 +6,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 
-COPY *.go ./
+COPY internal ./internal
+COPY cmd ./cmd
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
 
 COPY db/migrations/* /db/migrations/
