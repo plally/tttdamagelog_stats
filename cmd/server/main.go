@@ -61,7 +61,8 @@ func main() {
 
 	r.Get("/stats/charts", func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("getting charts")
-		steamid64 := r.URL.Query().Get("steamid64")
+		steamid64 := r.URL.Query().Get("id")
+
 		if steamid64 == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
