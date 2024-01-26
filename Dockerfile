@@ -11,7 +11,7 @@ COPY cmd ./cmd
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
 
-COPY db/migrations/* /db/migrations/
+COPY db/migrations/* /app/db/migrations/
 
 
 EXPOSE 8080
