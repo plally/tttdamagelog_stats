@@ -22,8 +22,8 @@ import (
 func main() {
 	ctx := context.Background()
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 	cfg := config.Get()
-
 	pool, err := pgxpool.New(ctx, cfg.PostgresURL)
 	if err != nil {
 		panic(err)
