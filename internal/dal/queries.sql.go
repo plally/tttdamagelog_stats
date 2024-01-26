@@ -237,7 +237,7 @@ func (q *Queries) StatsGetMostUsedWeaponsPerRound(ctx context.Context, eventTime
 }
 
 const statsGetPlayerKilledByMost = `-- name: StatsGetPlayerKilledByMost :many
-SELECT event_data->>'Attacker'  as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_data->>'Victim'=$1::text GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5
+SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_data->>'Victim'=$1::text GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5
 `
 
 type StatsGetPlayerKilledByMostRow struct {
@@ -254,6 +254,35 @@ func (q *Queries) StatsGetPlayerKilledByMost(ctx context.Context, victim string)
 	var items []StatsGetPlayerKilledByMostRow
 	for rows.Next() {
 		var i StatsGetPlayerKilledByMostRow
+		if err := rows.Scan(&i.Attacker, &i.TotalKills); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const statsGetPlayersTopKills = `-- name: StatsGetPlayersTopKills :many
+SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5
+`
+
+type StatsGetPlayersTopKillsRow struct {
+	Attacker   interface{}
+	TotalKills int64
+}
+
+func (q *Queries) StatsGetPlayersTopKills(ctx context.Context, eventTime pgtype.Timestamp) ([]StatsGetPlayersTopKillsRow, error) {
+	rows, err := q.db.Query(ctx, statsGetPlayersTopKills, eventTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StatsGetPlayersTopKillsRow
+	for rows.Next() {
+		var i StatsGetPlayersTopKillsRow
 		if err := rows.Scan(&i.Attacker, &i.TotalKills); err != nil {
 			return nil, err
 		}

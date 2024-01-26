@@ -3,6 +3,7 @@ package charts
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -16,6 +17,20 @@ var defaultCharts = map[string]chartGenerator{
 	"PlayerKilledByMost": PlayerKilledByMost,
 	"MostPlayedMaps":     MostPlayedMaps,
 	"MostUsedWeapon":     MostUsedWeapon,
+	"PlayerTopKills":     PlayerTopKills,
+}
+
+func GetRandomChart(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
+	length := len(defaultCharts)
+	i := rand.Intn(length)
+	for _, generator := range defaultCharts {
+		if i == 0 {
+			return generator(ctx, steamID64, q)
+		}
+		i--
+	}
+
+	return Chart{}, fmt.Errorf("failed to get random chart")
 }
 
 func GetDefaultCharts(ctx context.Context, steamID64 string, q *dal.Queries) (map[string]Chart, error) {
@@ -60,7 +75,7 @@ func MostPlayedMaps(ctx context.Context, steamID64 string, q *dal.Queries) (Char
 
 func PlayerKilledByMost(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
 	input := BarChartInput{
-		Label: "Players who killed you the most",
+		Label: "Players who have killed you the most",
 	}
 
 	dbData, err := q.StatsGetPlayerKilledByMost(ctx, steamID64)
@@ -91,21 +106,47 @@ func MostUsedWeapon(ctx context.Context, steamID64 string, q *dal.Queries) (Char
 		return Chart{}, err
 	}
 
-	if len(dbData) > 7 {
-		dbData = dbData[:7]
-	}
-
 	for _, row := range dbData {
 		if row.Weapon == "" {
 			continue
 		}
+		if row.Weapon == nil {
+			continue
+		}
+
 		input.Items = append(input.Items, PieChartItem{
 			Data:  int(row.UsageCount),
 			Label: fmt.Sprintf("%v", row.Weapon),
 		})
+		if len(input.Items) > 6 {
+			break
+		}
 	}
 
 	return PieChart(input), nil
+}
+
+func PlayerTopKills(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
+	input := BarChartInput{
+		Label: "Players with the most kills in the last 30 days",
+	}
+
+	dbData, err := q.StatsGetPlayersTopKills(ctx, pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now().Add(-30 * 24 * time.Hour),
+	})
+	if err != nil {
+		return Chart{}, err
+	}
+
+	for _, row := range dbData {
+		input.Items = append(input.Items, BarChartItem{
+			Data:  int(row.TotalKills),
+			Label: GetAttackerName(ctx, row.Attacker, q),
+		})
+	}
+
+	return BarChart(input), nil
 }
 
 func GetAttackerName(ctx context.Context, v any, q *dal.Queries) string {

@@ -62,9 +62,23 @@ func main() {
 	r.Get("/stats/charts", func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("getting charts")
 		steamid64 := r.URL.Query().Get("id")
+		first := r.URL.Query().Get("first")
 
 		if steamid64 == "" {
 			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if first == "true" {
+			chart, err := charts.GetRandomChart(r.Context(), steamid64, queries)
+			if err != nil {
+				slog.With("error", err).Error("failed to get random chart")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode([]charts.Chart{chart})
 			return
 		}
 

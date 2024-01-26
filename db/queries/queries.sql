@@ -36,3 +36,6 @@ SELECT SUM((event_data->>'Damage')::int) as total_damage, event_data->>'Weapon' 
 
 -- name: StatsGetPlayerKilledByMost :many
 SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_data->>'Victim'=sqlc.arg(victim)::text GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5;
+
+-- name: StatsGetPlayersTopKills :many
+SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5;
