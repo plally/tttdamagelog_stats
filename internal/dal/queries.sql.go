@@ -266,7 +266,7 @@ func (q *Queries) StatsGetPlayerKilledByMost(ctx context.Context, victim string)
 }
 
 const statsGetPlayersTopKills = `-- name: StatsGetPlayersTopKills :many
-SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 5
+SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 10
 `
 
 type StatsGetPlayersTopKillsRow struct {

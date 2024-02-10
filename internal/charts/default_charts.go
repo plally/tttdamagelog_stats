@@ -128,12 +128,12 @@ func MostUsedWeapon(ctx context.Context, steamID64 string, q *dal.Queries) (Char
 
 func PlayerTopKills(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
 	input := BarChartInput{
-		Label: "Players with the most kills in the last 30 days",
+		Label: "Players with the most kills in the last 7 days",
 	}
 
 	dbData, err := q.StatsGetPlayersTopKills(ctx, pgtype.Timestamp{
 		Valid: true,
-		Time:  time.Now().Add(-30 * 24 * time.Hour),
+		Time:  time.Now().Add(-7 * 24 * time.Hour),
 	})
 	if err != nil {
 		return Chart{}, err
