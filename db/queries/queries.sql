@@ -39,3 +39,6 @@ SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as to
 
 -- name: StatsGetPlayersTopKills :many
 SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 10;
+
+-- name: StatsGetPlayerTopDeaths :many
+SELECT event_data->>'Victim' as victim, COUNT(event_data->>'Victim') as total_deaths FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Victim' ORDER BY total_deaths DESC LIMIT 10;

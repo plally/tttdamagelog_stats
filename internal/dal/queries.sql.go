@@ -265,6 +265,35 @@ func (q *Queries) StatsGetPlayerKilledByMost(ctx context.Context, victim string)
 	return items, nil
 }
 
+const statsGetPlayerTopDeaths = `-- name: StatsGetPlayerTopDeaths :many
+SELECT event_data->>'Victim' as victim, COUNT(event_data->>'Victim') as total_deaths FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Victim' ORDER BY total_deaths DESC LIMIT 10
+`
+
+type StatsGetPlayerTopDeathsRow struct {
+	Victim      interface{}
+	TotalDeaths int64
+}
+
+func (q *Queries) StatsGetPlayerTopDeaths(ctx context.Context, eventTime pgtype.Timestamp) ([]StatsGetPlayerTopDeathsRow, error) {
+	rows, err := q.db.Query(ctx, statsGetPlayerTopDeaths, eventTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StatsGetPlayerTopDeathsRow
+	for rows.Next() {
+		var i StatsGetPlayerTopDeathsRow
+		if err := rows.Scan(&i.Victim, &i.TotalDeaths); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const statsGetPlayersTopKills = `-- name: StatsGetPlayersTopKills :many
 SELECT event_data->>'Attacker' as attacker, COUNT(event_data->>'Attacker') as total_kills FROM events WHERE event_type='kill' AND event_time > $1 GROUP BY event_data->>'Attacker' ORDER BY total_kills DESC LIMIT 10
 `

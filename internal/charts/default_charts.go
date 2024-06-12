@@ -18,6 +18,7 @@ var defaultCharts = map[string]chartGenerator{
 	"MostPlayedMaps":     MostPlayedMaps,
 	"MostUsedWeapon":     MostUsedWeapon,
 	"PlayerTopKills":     PlayerTopKills,
+	"PlayerTopDeaths":    PlayerTopDeaths,
 }
 
 func GetRandomChart(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
@@ -143,6 +144,29 @@ func PlayerTopKills(ctx context.Context, steamID64 string, q *dal.Queries) (Char
 		input.Items = append(input.Items, BarChartItem{
 			Data:  int(row.TotalKills),
 			Label: GetAttackerName(ctx, row.Attacker, q),
+		})
+	}
+
+	return BarChart(input), nil
+}
+
+func PlayerTopDeaths(ctx context.Context, steamID64 string, q *dal.Queries) (Chart, error) {
+	input := BarChartInput{
+		Label: "Players with the most deaths in the last 7 days",
+	}
+
+	dbData, err := q.StatsGetPlayerTopDeaths(ctx, pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now().Add(-7 * 24 * time.Hour),
+	})
+	if err != nil {
+		return Chart{}, err
+	}
+
+	for _, row := range dbData {
+		input.Items = append(input.Items, BarChartItem{
+			Data:  int(row.TotalDeaths),
+			Label: GetAttackerName(ctx, row.Victim, q),
 		})
 	}
 
